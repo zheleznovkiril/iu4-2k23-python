@@ -1,14 +1,16 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
+from typing import Union
+import json
 
 
+@dataclass
 class CommonCTypeClass:
     """
     Базовый класс, от которого будут наследоваться другие классы.
     Содержит общие методы и свойства, необходимые для работы классов-наследников.
     """
-    def __init__(self, string_number: int, name: str):
-        self.string_number = str(string_number)
-        self.name = name
+    string_number: int
+    name: str
 
 
 @dataclass
@@ -16,92 +18,62 @@ class Function(CommonCTypeClass):
     arguments: list
     return_type: str
 
-    def __dict__(self):
-        return {
-            "string": self.string_number,
-            "name": self.name,
-            "return type": self.return_type,
-            "arguments": self.arguments,
-            "parse type": "function"
-        }
-
 
 @dataclass
 class Typedef(CommonCTypeClass):
     type: str
-    list: None
-
-    def __dict__(self):
-        typedef_dict = {
-            "string": self.string_number,
-            "name": self.name,
-            "type": self.type,
-            "parse type": "typedef"
-        }
-        if self.list:
-            typedef_dict["struct types"] = self.list
-
-        return typedef_dict
+    struct_types: list[str] = None
 
 
 @dataclass
 class Directive(CommonCTypeClass):
     value: str
 
-    def __dict__(self) -> dict:
-        return {
-            "string": self.string_number,
-            "name": self.name,
-            "value": self.value,
-            "parse type": "directive"
-        }
 
-
-def dict_to_func(input_dict: dict) -> Function:
-    pass
-
-
-def dict_to_typedef(input_dict: dict) -> Typedef:
-    pass
-
-
-def dict_to_directive(input_dict: dict) -> Directive:
-    pass
-
-
-@dataclass()
+@dataclass
 class CHeaderView:
-    functions: list = None
-    typedefs: list = None
-    directives: list = None
+    functions: list[Function] = None
+    typedefs: list[Typedef] = None
+    directives: list[Directive] = None
 
-    def add_func(self, func: Function):
-        self.functions.append(func)
+    def append_element(self, element: Union[Function, Typedef, Directive]):
+        if isinstance(element, Function):
+            self.functions.append(element)
+        elif isinstance(element, Typedef):
+            self.typedefs.append(element)
+        elif isinstance(element, Directive):
+            self.directives.append(element)
+        else:
+            raise TypeError(
+                f"Invalid element type. Only Function, Typedef or Directive objects are allowed. "
+                f"Got {type(element)} instead."
+            )
 
-    def add_typedef(self, typed: Typedef):
-        self.typedefs.append(typed)
+    @staticmethod
+    def from_dict(input_dict: dict):
+        functions = [Function(**functions_dict) for functions_dict in input_dict.get("functions", [])]
+        typedefs = [Typedef(**typedefs_dict) for typedefs_dict in input_dict.get("typedefs", [])]
+        directives = [Directive(**directives_dict) for directives_dict in input_dict.get("directives", [])]
+        return CHeaderView(functions=functions, typedefs=typedefs, directives=directives)
 
-    def add_directive(self, directive: Directive):
-        self.directives.append(directive)
+    def print_functions(self):
+        dict_c_header = asdict(self)
+        data = json.dumps(dict_c_header['functions'], indent=4)
+        print('\'functions\' = ' + data)
 
-    def __dict__(self) -> dict:
-        c_header_dict = {}
-        for it in self.functions:
-            c_header_dict[it.string_number] = dict(it)
-        for it in self.typedefs:
-            c_header_dict[it.string_number] = dict(it)
-        for it in self.directives:
-            c_header_dict[it.string_number] = dict(it)
-        return dict(sorted(c_header_dict.items()))
+    def print_types(self):
+        dict_c_header = asdict(self)
+        data = json.dumps(dict_c_header['typedefs'], indent=4)
+        print('\'types\' = ' + data)
 
-    def dict_to_c_header_view(self, input_dict: dict):
-        self.functions = []
-        self.typedefs = []
-        self.directives = []
-        for key, value in input_dict:
-            if value["parse type"] == "function":
-                self.functions.append(dict_to_func(value))
-            elif value["parse type"] == "typedef":
-                self.typedefs.append(dict_to_typedef(value))
-            elif value["parse type"] == "directive":
-                self.directives.append(dict_to_directive(value))
+    def print_directives(self):
+        dict_c_header = asdict(self)
+        data = json.dumps(dict_c_header['directives'], indent=4)
+        print('\'directives\' = ' + data)
+
+    def print_structures(self):
+        dict_c_header = asdict(self)
+        print('\'structures\' = ', end='')
+        for it in dict_c_header['typedefs']:
+            if it['type'] == 'struct':
+                print(json.dumps(it, indent=4))
