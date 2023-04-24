@@ -1,19 +1,30 @@
-import argparse
+import click
 
 
-def parse_argv(argv: list):
-    parser = argparse.ArgumentParser(
-        prog="GZPDHB",
-        description="Copyright by 'Team of full D.'\nAll rights reserved.")
+def is_valid_input_file(value):
+    if not value.endswith('.h') and not value.endswith('.json'):
+        raise click.BadParameter('Входной файл должен иметь расширение .h или .json')
+    else:
+        return value
 
-    parser.add_argument("-of", "--output-functions")
-    parser.add_argument("-od", "--output-directives")
-    parser.add_argument("-ot", "--output-types")
 
-    parser.add_argument("-b", "--bonus") #  Придумать надо будет
+def is_valid_output_file(value):
+    if not value.endswith('.json'):
+        raise click.BadParameter('Выходной файл должен иметь расширение .json')
+    else:
+        return value
 
-    # Аргументы для входного и выходного файла
-    parser.add_argument("-f", "--input-file")
-    parser.add_argument("-j", "--json")
 
-    return parser
+@click.command()
+@click.option('-f', '--input-file', type=click.Path(exists=True), required=True, help='Имя входного файла')
+@click.option('-j', '--output-file', required=True, help='Имя выходного JSON файла')
+@click.option('-os', '--output-structures', is_flag=True, help='Вывести список всех структур (бонус 2)')
+@click.option('-of', '--output-functions', is_flag=True, help='Вывести список всех функций')
+@click.option('-od', '--output-directives', is_flag=True, help='Вывести список всех директив компилятора')
+@click.option('-ot', '--output-types', is_flag=True, help='Вывести список всех объявлений типов')
+@click.pass_context
+def parse_command_line(ctx, **kwargs) -> dict:
+    is_valid_input_file(kwargs['input_file'])
+    is_valid_output_file(kwargs['output_file'])
+
+    return kwargs
