@@ -1,0 +1,36 @@
+{
+  "functions": [
+    {
+      "string_number": 10,
+      "name": "add",
+      "arguments": [
+        "int",
+        "int"
+      ],
+      "return_type": "int"
+    },
+    {
+      "string_number": 12,
+      "name": "print_point",
+      "arguments": [
+        "Point"
+      ],
+      "return_type": "void"
+    }
+  ],
+  "typedefs": [
+    {
+      "string_number": 8,
+      "name": "my_type",
+      "type": "char",
+      "struct_types": null
+    }
+  ],
+  "directives": [
+    {
+      "string_number": 6,
+      "name": "MAX_VALUE",
+      "value": "100"
+    }
+  ]
+}
