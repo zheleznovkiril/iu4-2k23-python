@@ -8,6 +8,8 @@ def parse_header_file(filename: str) -> CHeaderView:
 
     function_regex = re.compile(r'([\w\s*]+)\s+(\w+)\s*\((.*)\);')
     typedef_regex = re.compile(r'typedef\s+([\w\s*]+)\s+(\w+)\s*;')
+    directive_regex = re.compile(r'#define\s+(\w+)\s+(.*)')
+    struct_regex = re.compile(r'struct\s+(\w+)\s*{([^}]*)};')
 
     functions = []
     typedefs = []
@@ -35,8 +37,27 @@ def parse_header_file(filename: str) -> CHeaderView:
                 'type': type_name.strip()
             })
             continue
-            
-            #MAX KIDAESH SUDA typedef and structure 
+
+        match = directive_regex.search(line)
+        if match:
+            name, value = match.groups()
+            directives.append({
+                'name': name,
+                'string_number': it+1,
+                'value': value.strip()
+            })
+            continue
+
+        match = struct_regex.search(line)
+        if match:
+            name, fields = match.groups()
+            struct_types = [field.strip().split()[1] for field in fields.split(';') if field.strip()]
+            typedefs.append({
+                'name': name,
+                'string_number': it+1,
+                'struct_types': struct_types
+            })
+            continue
 
     return CHeaderView.from_dict({
         'functions': functions,
